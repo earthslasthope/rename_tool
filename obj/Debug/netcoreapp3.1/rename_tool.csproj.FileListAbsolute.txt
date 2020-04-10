@@ -1,0 +1,15 @@
+F:\Projects\rename_tool\bin\Debug\netcoreapp3.1\rename_tool.exe
+F:\Projects\rename_tool\bin\Debug\netcoreapp3.1\rename_tool.deps.json
+F:\Projects\rename_tool\bin\Debug\netcoreapp3.1\rename_tool.runtimeconfig.json
+F:\Projects\rename_tool\bin\Debug\netcoreapp3.1\rename_tool.runtimeconfig.dev.json
+F:\Projects\rename_tool\bin\Debug\netcoreapp3.1\rename_tool.dll
+F:\Projects\rename_tool\bin\Debug\netcoreapp3.1\rename_tool.pdb
+F:\Projects\rename_tool\obj\Debug\netcoreapp3.1\rename_tool.csprojAssemblyReference.cache
+F:\Projects\rename_tool\obj\Debug\netcoreapp3.1\rename_tool.csproj.CoreCompileInputs.cache
+F:\Projects\rename_tool\obj\Debug\netcoreapp3.1\rename_tool.AssemblyInfoInputs.cache
+F:\Projects\rename_tool\obj\Debug\netcoreapp3.1\rename_tool.AssemblyInfo.cs
+F:\Projects\rename_tool\obj\Debug\netcoreapp3.1\rename_tool.dll
+F:\Projects\rename_tool\obj\Debug\netcoreapp3.1\rename_tool.pdb
+F:\Projects\rename_tool\obj\Debug\netcoreapp3.1\rename_tool.genruntimeconfig.cache
+F:\Projects\rename_tool\bin\Debug\netcoreapp3.1\ICSharpCode.SharpZipLib.dll
+F:\Projects\rename_tool\obj\Debug\netcoreapp3.1\rename_tool.csproj.CopyComplete
