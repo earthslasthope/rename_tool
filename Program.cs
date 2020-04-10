@@ -1,8 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
-using ICSharpCode.SharpZipLib.Core;
-using ICSharpCode.SharpZipLib.Zip;
 
 namespace rename_tool
 {
@@ -34,11 +33,10 @@ namespace rename_tool
 
                 var file = files.First();
                 Console.WriteLine($"  Inspecting ZIP file {Path.GetFileName(file)}");
-                using (ZipInputStream zipStream = new ZipInputStream(File.OpenRead(file)))
+                
+                using (var archive = ZipFile.OpenRead(file))
                 {
-                    ZipEntry  entry;
-
-                    while ((entry = zipStream.GetNextEntry()) != null)
+                    foreach (var entry in archive.Entries)
                     {
                         string fileName = entry.Name;
                         string extension = Path.GetExtension(fileName);
@@ -47,7 +45,7 @@ namespace rename_tool
                         
                         if (n64Extensions.Contains(extension))
                         {
-                            Console.WriteLine($"    Extension is {extension}");
+                            Console.WriteLine($"    {fileName}");
 
                             string targetPath = Path.Combine(destinationDir, dirName + Path.GetExtension(entry.Name));
 
@@ -58,10 +56,7 @@ namespace rename_tool
 
                             Console.WriteLine($"    Target path is {targetPath}");
                             Console.WriteLine("Begin transfering from stream to file");
-                            using (FileStream streamWriter = File.Create(targetPath))
-                            {
-                                StreamUtils.Copy(zipStream, streamWriter, buffer);
-                            }
+                            entry.ExtractToFile(targetPath);
                             Console.WriteLine("Done");
                         }
                     }
