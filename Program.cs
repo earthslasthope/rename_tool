@@ -7,8 +7,8 @@ namespace rename_tool
 {
     class Program
     {
-        private static readonly string sourceDir = @"C:\Users\thordur\Documents\Test_Harness\Source";
-        private static readonly string destinationDir = @"C:\Users\thordur\Documents\Test_Harness\Destination";
+        private static readonly string sourceDir = @"F:\backup\N64.SCENE.ARCHIVE";
+        private static readonly string destinationDir = @"H:\batocera\roms\n64";
 
         static void Main(string[] args)
         {
@@ -16,11 +16,12 @@ namespace rename_tool
 
             Console.WriteLine("Fetching folders");
             Console.WriteLine();
+
             foreach (string gameDir in Directory.GetDirectories(sourceDir))
             {
                 string dirName = Path.GetFileName(gameDir);
                 Console.WriteLine($"{dirName} (FOLDER)");
-                Console.WriteLine("  Searching for zip file");
+
                 var files = Directory.GetFiles(gameDir).Where(x => Path.GetExtension(x) == ".zip");
                 Console.WriteLine($"  Found {files.Count()} files");
 
@@ -28,47 +29,51 @@ namespace rename_tool
                 {
                     Console.WriteLine();
                     Console.WriteLine();
-                    break;
+                    continue;
                 }
 
                 var file = files.First();
                 Console.WriteLine($"  Inspecting ZIP file {Path.GetFileName(file)}");
                 
-                using (var archive = ZipFile.OpenRead(file))
+                try 
                 {
-                    foreach (var entry in archive.Entries)
+                    using (var archive = ZipFile.OpenRead(file))
                     {
-                        string fileName = entry.Name;
-                        string extension = Path.GetExtension(fileName);
-
-                        var buffer = new byte[4096];
-                        
-                        if (n64Extensions.Contains(extension))
+                        foreach (var entry in archive.Entries)
                         {
-                            Console.WriteLine($"    {fileName}");
+                            string fileName = entry.Name;
+                            string extension = Path.GetExtension(fileName);
 
-                            string targetPath = Path.Combine(destinationDir, dirName + Path.GetExtension(entry.Name));
+                            var buffer = new byte[4096];
+                            
+                            if (n64Extensions.Contains(extension))
+                            {
+                                Console.WriteLine($"    {fileName}");
 
-                            if (Path.GetExtension(targetPath) == ".rom")
-                            {
-                                targetPath = Path.ChangeExtension(targetPath, "n64");
-                            }
+                                string targetPath = Path.Combine(destinationDir, dirName + Path.GetExtension(entry.Name));
 
-                            Console.WriteLine($"    Target path is {targetPath}");
-                            Console.WriteLine("Begin transfering from stream to file");
-                            try 
-                            {
-                                entry.ExtractToFile(targetPath);
-                                Console.WriteLine("    Done");
-                            }
-                            catch (IOException)
-                            {
-                                File.Delete(targetPath);
-                                Console.WriteLine("    Failure");
+                                if (Path.GetExtension(targetPath) == ".rom")
+                                {
+                                    targetPath = Path.ChangeExtension(targetPath, "n64");
+                                }
+
+                                Console.WriteLine($"    Target path is {targetPath}");
+                                Console.WriteLine("Begin transfering from stream to file");
+                                try 
+                                {
+                                    entry.ExtractToFile(targetPath);
+                                    Console.WriteLine("    Done");
+                                }
+                                catch (Exception)
+                                {
+                                    File.Delete(targetPath);
+                                    Console.WriteLine("    Failure");
+                                }
                             }
                         }
                     }
                 }
+                catch (SystemException) {}
 
                 Console.WriteLine();
                 Console.WriteLine();
