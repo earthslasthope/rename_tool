@@ -56,8 +56,16 @@ namespace rename_tool
 
                             Console.WriteLine($"    Target path is {targetPath}");
                             Console.WriteLine("Begin transfering from stream to file");
-                            entry.ExtractToFile(targetPath);
-                            Console.WriteLine("Done");
+                            try 
+                            {
+                                entry.ExtractToFile(targetPath);
+                                Console.WriteLine("    Done");
+                            }
+                            catch (IOException)
+                            {
+                                File.Delete(targetPath);
+                                Console.WriteLine("    Failure");
+                            }
                         }
                     }
                 }
