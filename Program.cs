@@ -114,12 +114,14 @@ namespace rename_tool
                         Console.WriteLine($"    {fileName}");
 
                         string targetPath = Path.Combine(destinationDir, dirName + Path.GetExtension(fileName));
+                        string extractArgs = $"e {file} {entry} {destinationDir}";
                         Console.WriteLine($"    Target path is {targetPath}");
-                        Console.WriteLine("    Begin transfering from stream to file");
+                        Console.WriteLine("    Begin running the unrar command");
+                        Console.WriteLine($"    Args: {extractArgs}");
                         using (var process = new Process())
                         {
                             process.StartInfo.FileName = rarExecPath;
-                            process.StartInfo.Arguments = $"e {fileName} {targetPath}";
+                            process.StartInfo.Arguments = extractArgs;
                             process.StartInfo.UseShellExecute = false;
                             process.StartInfo.RedirectStandardError = true;
                             process.StartInfo.RedirectStandardOutput = true;
@@ -127,7 +129,10 @@ namespace rename_tool
                             List<string> errors = new List<string>();
                             process.ErrorDataReceived += (sender, e) => 
                             {
-                                errors.Add(e.Data);
+                                if (!string.IsNullOrWhiteSpace(e.Data))
+                                {
+                                    errors.Add(e.Data);
+                                }
                             };
                             process.Start();
                             process.BeginErrorReadLine();
@@ -145,6 +150,11 @@ namespace rename_tool
                             else
                             {
                                 Console.WriteLine("    Done");
+
+                                File.Move(
+                                    Path.Combine(destinationDir, fileName),
+                                    targetPath
+                                );
                             }
                         }
                     }
