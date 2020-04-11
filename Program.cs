@@ -121,21 +121,26 @@ namespace rename_tool
                             process.StartInfo.FileName = rarExecPath;
                             process.StartInfo.Arguments = $"e {fileName} {targetPath}";
                             process.StartInfo.UseShellExecute = false;
+                            process.StartInfo.RedirectStandardError = true;
                             process.StartInfo.RedirectStandardOutput = true;
                             process.EnableRaisingEvents = true;
-                            bool hasError = false;
+                            List<string> errors = new List<string>();
                             process.ErrorDataReceived += (sender, e) => 
                             {
-                                hasError = true;
+                                errors.Add(e.Data);
                             };
                             process.Start();
                             process.BeginErrorReadLine();
                             process.WaitForExit();
                             process.CancelErrorRead();
 
-                            if (hasError)
+                            if (errors.Any())
                             {
                                 Console.WriteLine("    Failure");
+                                foreach (var error in errors)
+                                {
+                                    Console.WriteLine(error);
+                                }
                             }
                             else
                             {
