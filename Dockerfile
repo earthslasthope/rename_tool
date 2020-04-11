@@ -17,4 +17,4 @@ COPY --from=build /app .
 COPY --from=tools /usr/bin/unrar /usr/bin/unrar
 COPY --from=tools /usr/bin/unrar-nonfree /usr/bin/unrar-nonfree
 VOLUME [ "/source_dir", "/dest_dir" ]
-ENTRYPOINT [ "dotnet", "run", "rename_tool.dll" ]
+ENTRYPOINT [ "dotnet", "rename_tool.dll" ]
