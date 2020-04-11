@@ -9,14 +9,26 @@ namespace rename_tool
 {
     class Program
     {
-        private static readonly string sourceDir = @"F:\backup\3DS_Roms_0001-0800_USA";
-        private static readonly string destinationDir = @"F:\backup\3DS_Roms_0001-0800_USA_Destination";
-        private static readonly string rarExecPath = @"C:\Program Files\WinRAR\unrar.exe";
+        private static readonly string sourceDir = "/source_dir";
+        private static readonly string destinationDir = "/dest_dir";
+        private static readonly string rarExecPath = "unrar";
 
         static void Main(string[] args)
         {
             string[] n64Extensions = new string[] { ".rom", ".z64", ".n64", ".v64" };
             string [] compressionExtensions = new string[] { ".rar", ".zip" };
+
+            if (!Directory.Exists(sourceDir))
+            {
+                Console.Error.WriteLine($"No volume mapped to {sourceDir}");
+                return;
+            }
+
+            if (!Directory.Exists(destinationDir))
+            {
+                Console.Error.WriteLine($"No volume mapped to {destinationDir}");
+                return;
+            }
 
             Console.WriteLine("Fetching folders");
             Console.WriteLine();
