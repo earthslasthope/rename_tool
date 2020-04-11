@@ -150,11 +150,16 @@ namespace rename_tool
                             else
                             {
                                 Console.WriteLine("    Done");
+                                string tempPath = Path.Combine(destinationDir, fileName);
 
-                                File.Move(
-                                    Path.Combine(destinationDir, fileName),
-                                    targetPath
-                                );
+                                try
+                                {
+                                    File.Move(tempPath, targetPath);
+                                }
+                                catch 
+                                {
+                                    File.Delete(tempPath);
+                                }
                             }
                         }
                     }
