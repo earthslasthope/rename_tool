@@ -84,28 +84,63 @@ namespace rename_tool
                 }
                 else if (ext == ".rar")
                 {
+                    List<string> entries = new List<string>();
+
                     using (var process = new Process())
                     {
-                        List<string> entries = new List<string>();
                         process.StartInfo.FileName = rarExecPath;
                         process.StartInfo.Arguments = $"lb {file}";
-                        process.OutputDataReceived += (sender, data) => entries.Add(data.Data);
-                        process.Start();
-                        process.WaitForExit();
-
-                        foreach (var entry in entries)
+                        process.StartInfo.UseShellExecute = false;
+                        process.StartInfo.RedirectStandardOutput = true;
+                        process.EnableRaisingEvents = true;
+                        process.OutputDataReceived += (sender, e) => 
                         {
-                            if (Path.GetExtension(entry) != ".3ds")
+                            entries.Add(e.Data);
+                        };
+                        process.Start();
+                        process.BeginOutputReadLine();
+                        process.WaitForExit();
+                        process.CancelOutputRead();
+                    }
+
+                    foreach (var entry in entries)
+                    {
+                        if (Path.GetExtension(entry) != ".3ds")
+                        {
+                            continue;
+                        }
+
+                        string fileName = entry;
+                        Console.WriteLine($"    {fileName}");
+
+                        string targetPath = Path.Combine(destinationDir, dirName + Path.GetExtension(fileName));
+                        Console.WriteLine($"    Target path is {targetPath}");
+                        Console.WriteLine("    Begin transfering from stream to file");
+                        using (var process = new Process())
+                        {
+                            process.StartInfo.FileName = rarExecPath;
+                            process.StartInfo.Arguments = $"e {fileName} {targetPath}";
+                            process.StartInfo.UseShellExecute = false;
+                            process.StartInfo.RedirectStandardOutput = true;
+                            process.EnableRaisingEvents = true;
+                            bool hasError = false;
+                            process.ErrorDataReceived += (sender, e) => 
                             {
-                                continue;
+                                hasError = true;
+                            };
+                            process.Start();
+                            process.BeginErrorReadLine();
+                            process.WaitForExit();
+                            process.CancelErrorRead();
+
+                            if (hasError)
+                            {
+                                Console.WriteLine("    Failure");
                             }
-
-                            string fileName = entry;
-                            Console.WriteLine($"    {fileName}");
-
-                            string targetPath = Path.Combine(destinationDir, dirName + Path.GetExtension(fileName));
-                            Console.WriteLine($"    Target path is {targetPath}");
-                            Console.WriteLine("    Begin transfering from stream to file");
+                            else
+                            {
+                                Console.WriteLine("    Done");
+                            }
                         }
                     }
                 }
