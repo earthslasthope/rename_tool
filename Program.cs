@@ -55,24 +55,24 @@ namespace rename_tool
 
                         try
                         {
-                            archive.ExtractToDirectory(destinationDir);
+                            archive.ExtractToDirectory(archiveDestPath);
                             Console.WriteLine("    Success");
                             Console.WriteLine("    Next step is to create a dosbox.bat file which opens the exe file (if found)");
 
-                            var exeFiles = Directory.GetFiles(destinationDir).Where(f => Path.GetExtension(f) == ".exe");
+                            var exeFiles = Directory.GetFiles(archiveDestPath).Where(f => Path.GetExtension(f) == ".exe");
                             int exeFileCount = exeFiles.Count();
 
                             if (exeFileCount != 1)
                             {
                                 Console.WriteLine($"    Found {exeFileCount} exe files. Unable to create dosbox.bat file.");
-                                File.AppendAllText(needMoreWorkTxt, Path.GetFileNameWithoutExtension(file));
+                                File.AppendAllLines(needMoreWorkTxt, new string[] { Path.GetFileNameWithoutExtension(file) });
                                 continue;
                             }
 
-                            string exeFile = exeFiles.First();
+                            string exeFile = Path.GetFileName(exeFiles.First());
                             Console.WriteLine($"    Creating the dosbox.bat file with instructions to execute {exeFile}");
 
-                            File.WriteAllText(destinationDir, exeFile);
+                            File.WriteAllText(Path.Combine(archiveDestPath, "dosbox.bat"), exeFile);
                         }
                         catch (Exception exc)
                         {
