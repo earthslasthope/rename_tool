@@ -78,39 +78,6 @@ namespace rename_tool
                         {
                             Console.WriteLine($"    Failed to extract file: {exc.Message}");
                         }
-                        // continue;
-                        // foreach (var entry in archive.Entries)
-                        // {
-                        //     string fileName = entry.Name;
-                        //     string extension = Path.GetExtension(fileName);
-
-                        //     var buffer = new byte[4096];
-                            
-                        //     if (n64Extensions.Contains(extension))
-                        //     {
-                        //         Console.WriteLine($"    {fileName}");
-
-                        //         string targetPath = Path.Combine(destinationDir, dirName + Path.GetExtension(entry.Name));
-
-                        //         if (Path.GetExtension(targetPath) == ".rom")
-                        //         {
-                        //             targetPath = Path.ChangeExtension(targetPath, "n64");
-                        //         }
-
-                        //         Console.WriteLine($"    Target path is {targetPath}");
-                        //         Console.WriteLine("    Begin transfering from stream to file");
-                        //         try 
-                        //         {
-                        //             entry.ExtractToFile(targetPath);
-                        //             Console.WriteLine("    Done");
-                        //         }
-                        //         catch (Exception)
-                        //         {
-                        //             File.Delete(targetPath);
-                        //             Console.WriteLine("    Failure");
-                        //         }
-                        //     }
-                        // }
                     }
                 }
                 catch (SystemException) {}
