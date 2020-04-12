@@ -9,9 +9,10 @@ namespace rename_tool
 {
     class Program
     {
-        private static readonly string sourceDir = "/source_dir";
-        private static readonly string destinationDir = "/dest_dir";
-        private static readonly string rarExecPath = "unrar";
+        private static readonly string sourceDir = @"F:\backup\DOSCollection";
+        private static readonly string destinationDir = @"H:\batocera\roms\dos";
+        private static readonly string needMoreWorkTxt = @"H:\batocera\roms\dos\_need_more_work.txt";
+        private static readonly string rarExecPath = @"C:\Program Files\WinRAR\unrar.exe";
 
         static void Main(string[] args)
         {
@@ -30,152 +31,89 @@ namespace rename_tool
                 return;
             }
 
-            Console.WriteLine("Fetching folders");
+            Console.WriteLine("Checking zip files");
             Console.WriteLine();
 
-            foreach (string gameDir in Directory.GetDirectories(sourceDir))
+            foreach (string file in Directory.GetFiles(sourceDir))
             {
-                string dirName = Path.GetFileName(gameDir);
-                Console.WriteLine($"{dirName} (FOLDER)");
+                Console.WriteLine($"  {file}");
+                string ext = Path.GetExtension(file);
 
-                var files = Directory.GetFiles(gameDir).Where(x => compressionExtensions.Contains(Path.GetExtension(x)));
-                Console.WriteLine($"  Found {files.Count()} files");
-
-                if (!files.Any())
+                if (ext != ".zip")
                 {
-                    Console.WriteLine();
-                    Console.WriteLine();
-                    continue;
+                    Console.WriteLine("  Not a zip file. Not doing anything more here.");
                 }
 
-                var file = files.First();
-                string ext = Path.GetExtension(file);
                 Console.WriteLine($"  Inspecting {ext.Substring(1).ToUpper()} file {Path.GetFileName(file)}");
                 
-                if (ext == ".zip")
+                try 
                 {
-                    try 
+                    using (var archive = ZipFile.OpenRead(file))
                     {
-                        using (var archive = ZipFile.OpenRead(file))
+                        string archiveDestPath = Path.Combine(destinationDir, Path.GetFileNameWithoutExtension(file) + ".dos");
+                        Console.WriteLine($"    Archive destiantion path: {archiveDestPath}");
+
+                        try
                         {
-                            foreach (var entry in archive.Entries)
+                            archive.ExtractToDirectory(destinationDir);
+                            Console.WriteLine("    Success");
+                            Console.WriteLine("    Next step is to create a dosbox.bat file which opens the exe file (if found)");
+
+                            var exeFiles = Directory.GetFiles(destinationDir).Where(f => Path.GetExtension(f) == ".exe");
+                            int exeFileCount = exeFiles.Count();
+
+                            if (exeFileCount != 1)
                             {
-                                string fileName = entry.Name;
-                                string extension = Path.GetExtension(fileName);
-
-                                var buffer = new byte[4096];
-                                
-                                if (n64Extensions.Contains(extension))
-                                {
-                                    Console.WriteLine($"    {fileName}");
-
-                                    string targetPath = Path.Combine(destinationDir, dirName + Path.GetExtension(entry.Name));
-
-                                    if (Path.GetExtension(targetPath) == ".rom")
-                                    {
-                                        targetPath = Path.ChangeExtension(targetPath, "n64");
-                                    }
-
-                                    Console.WriteLine($"    Target path is {targetPath}");
-                                    Console.WriteLine("    Begin transfering from stream to file");
-                                    try 
-                                    {
-                                        entry.ExtractToFile(targetPath);
-                                        Console.WriteLine("    Done");
-                                    }
-                                    catch (Exception)
-                                    {
-                                        File.Delete(targetPath);
-                                        Console.WriteLine("    Failure");
-                                    }
-                                }
+                                Console.WriteLine($"    Found {exeFileCount} exe files. Unable to create dosbox.bat file.");
+                                File.AppendAllText(needMoreWorkTxt, Path.GetFileNameWithoutExtension(file));
+                                continue;
                             }
+
+                            string exeFile = exeFiles.First();
+                            Console.WriteLine($"    Creating the dosbox.bat file with instructions to execute {exeFile}");
+
+                            File.WriteAllText(destinationDir, exeFile);
                         }
-                    }
-                    catch (SystemException) {}
-                }
-                else if (ext == ".rar")
-                {
-                    List<string> entries = new List<string>();
-
-                    using (var process = new Process())
-                    {
-                        process.StartInfo.FileName = rarExecPath;
-                        process.StartInfo.Arguments = $"lb {file}";
-                        process.StartInfo.UseShellExecute = false;
-                        process.StartInfo.RedirectStandardOutput = true;
-                        process.EnableRaisingEvents = true;
-                        process.OutputDataReceived += (sender, e) => 
+                        catch (Exception exc)
                         {
-                            entries.Add(e.Data);
-                        };
-                        process.Start();
-                        process.BeginOutputReadLine();
-                        process.WaitForExit();
-                        process.CancelOutputRead();
-                    }
-
-                    foreach (var entry in entries)
-                    {
-                        if (Path.GetExtension(entry) != ".3ds")
-                        {
-                            continue;
+                            Console.WriteLine($"    Failed to extract file: {exc.Message}");
                         }
+                        // continue;
+                        // foreach (var entry in archive.Entries)
+                        // {
+                        //     string fileName = entry.Name;
+                        //     string extension = Path.GetExtension(fileName);
 
-                        string fileName = entry;
-                        Console.WriteLine($"    {fileName}");
+                        //     var buffer = new byte[4096];
+                            
+                        //     if (n64Extensions.Contains(extension))
+                        //     {
+                        //         Console.WriteLine($"    {fileName}");
 
-                        string targetPath = Path.Combine(destinationDir, dirName + Path.GetExtension(fileName));
-                        string extractArgs = $"e {file} {entry} {destinationDir}";
-                        Console.WriteLine($"    Target path is {targetPath}");
-                        Console.WriteLine("    Begin running the unrar command");
-                        Console.WriteLine($"    Args: {extractArgs}");
-                        using (var process = new Process())
-                        {
-                            process.StartInfo.FileName = rarExecPath;
-                            process.StartInfo.Arguments = extractArgs;
-                            process.StartInfo.UseShellExecute = false;
-                            process.StartInfo.RedirectStandardError = true;
-                            process.StartInfo.RedirectStandardOutput = true;
-                            process.EnableRaisingEvents = true;
-                            List<string> errors = new List<string>();
-                            process.ErrorDataReceived += (sender, e) => 
-                            {
-                                if (!string.IsNullOrWhiteSpace(e.Data))
-                                {
-                                    errors.Add(e.Data);
-                                }
-                            };
-                            process.Start();
-                            process.BeginErrorReadLine();
-                            process.WaitForExit();
-                            process.CancelErrorRead();
+                        //         string targetPath = Path.Combine(destinationDir, dirName + Path.GetExtension(entry.Name));
 
-                            if (errors.Any())
-                            {
-                                Console.WriteLine("    Failure");
-                                foreach (var error in errors)
-                                {
-                                    Console.WriteLine(error);
-                                }
-                            }
-                            else
-                            {
-                                Console.WriteLine("    Done");
-                                string tempPath = Path.Combine(destinationDir, fileName);
+                        //         if (Path.GetExtension(targetPath) == ".rom")
+                        //         {
+                        //             targetPath = Path.ChangeExtension(targetPath, "n64");
+                        //         }
 
-                                try
-                                {
-                                    File.Move(tempPath, targetPath);
-                                }
-                                catch 
-                                {
-                                    File.Delete(tempPath);
-                                }
-                            }
-                        }
+                        //         Console.WriteLine($"    Target path is {targetPath}");
+                        //         Console.WriteLine("    Begin transfering from stream to file");
+                        //         try 
+                        //         {
+                        //             entry.ExtractToFile(targetPath);
+                        //             Console.WriteLine("    Done");
+                        //         }
+                        //         catch (Exception)
+                        //         {
+                        //             File.Delete(targetPath);
+                        //             Console.WriteLine("    Failure");
+                        //         }
+                        //     }
+                        // }
                     }
                 }
+                catch (SystemException) {}
 
                 Console.WriteLine();
                 Console.WriteLine();
