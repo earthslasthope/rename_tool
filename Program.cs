@@ -124,81 +124,28 @@ namespace rename_tool
                         }
 
                         string fileName = entry;
-                        Console.WriteLine($"    {fileName}");
+                        string targetExistingPath = Path.Combine(destinationDir, fileName);
+                        Console.WriteLine($"    Checking if {fileName} exists in the destination dir at");
+                        Console.WriteLine($"    {targetExistingPath}");
 
-                        string targetPath = Path.Combine(destinationDir, dirName + Path.GetExtension(fileName));
-                        string extractArgs = $"e {file} {entry} {destinationDir}";
-                        Console.WriteLine($"    Target path is {targetPath}");
-                        Console.WriteLine("    Begin running the unrar command");
-                        Console.WriteLine($"    Args: {extractArgs}");
-                        List<string> errors = new List<string>();
-                        using (var process = new Process())
+                        if (File.Exists(targetExistingPath))
                         {
-                            process.StartInfo.FileName = rarExecPath;
-                            process.StartInfo.Arguments = extractArgs;
-                            process.StartInfo.UseShellExecute = false;
-                            process.StartInfo.RedirectStandardError = true;
-                            process.StartInfo.RedirectStandardOutput = true;
-                            process.EnableRaisingEvents = true;
-                            process.ErrorDataReceived += (sender, e) => 
-                            {
-                                if (!string.IsNullOrWhiteSpace(e.Data))
-                                {
-                                    errors.Add(e.Data);
-                                }
-                            };
-                            process.Start();
-                            process.BeginErrorReadLine();
-                            process.CancelErrorRead();
-                            process.WaitForExit(60000);
+                            string newFilePath = Path.Combine(destinationDir, dirName + Path.GetExtension(targetExistingPath));
+                            Console.WriteLine("    File exists. Going to rename the file and the new path will be:");
+                            Console.WriteLine($"    {newFilePath}");
 
-                            if (!process.HasExited)
+                            try
                             {
-                                process.Kill();
+                                File.Move(targetExistingPath, newFilePath);
                             }
-
-                            if (errors.Any())
+                            catch (Exception exc)
                             {
-                                Console.WriteLine("    Failure");
-                                foreach (var error in errors)
-                                {
-                                    Console.WriteLine(error);
-                                }
+                                Console.WriteLine($"Unable to rename file: {exc.Message}");
                             }
-                            else
-                            {
-                                Console.WriteLine("    Done");
-                                string tempPath = Path.Combine(destinationDir, fileName);
-
-                                try
-                                {
-                                    File.Move(tempPath, targetPath);
-                                }
-                                catch (Exception exc)
-                                {
-                                    Console.WriteLine(exc.Message);
-
-                                    if (exc.Message.Contains("because it is being used by another process") && !process.HasExited)
-                                    {
-                                        process.Kill();
-                                        Thread.Sleep(10000);
-
-                                        try
-                                        {
-                                            File.Move(tempPath, targetPath);
-                                        }
-                                        catch {}
-
-                                        continue;
-                                    }
-
-                                    try
-                                    {
-                                        File.Delete(tempPath);
-                                    }
-                                    catch {}
-                                }
-                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("    Not existent. No need to do anything.");
                         }
                     }
                 }
