@@ -4,14 +4,15 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Threading;
 
 namespace rename_tool
 {
     class Program
     {
-        private static readonly string sourceDir = "/source_dir";
-        private static readonly string destinationDir = "/dest_dir";
-        private static readonly string rarExecPath = "unrar";
+        private static readonly string sourceDir = @"F:\backup\3DS_Roms_0001-0800_USA";
+        private static readonly string destinationDir = @"H:\batocera\roms\3ds";
+        private static readonly string rarExecPath = @"C:\Program Files\WinRAR\unrar.exe";
 
         static void Main(string[] args)
         {
@@ -130,6 +131,7 @@ namespace rename_tool
                         Console.WriteLine($"    Target path is {targetPath}");
                         Console.WriteLine("    Begin running the unrar command");
                         Console.WriteLine($"    Args: {extractArgs}");
+                        List<string> errors = new List<string>();
                         using (var process = new Process())
                         {
                             process.StartInfo.FileName = rarExecPath;
@@ -138,7 +140,6 @@ namespace rename_tool
                             process.StartInfo.RedirectStandardError = true;
                             process.StartInfo.RedirectStandardOutput = true;
                             process.EnableRaisingEvents = true;
-                            List<string> errors = new List<string>();
                             process.ErrorDataReceived += (sender, e) => 
                             {
                                 if (!string.IsNullOrWhiteSpace(e.Data))
@@ -148,8 +149,13 @@ namespace rename_tool
                             };
                             process.Start();
                             process.BeginErrorReadLine();
-                            process.WaitForExit();
                             process.CancelErrorRead();
+                            process.WaitForExit(60000);
+
+                            if (!process.HasExited)
+                            {
+                                process.Kill();
+                            }
 
                             if (errors.Any())
                             {
@@ -168,9 +174,29 @@ namespace rename_tool
                                 {
                                     File.Move(tempPath, targetPath);
                                 }
-                                catch 
+                                catch (Exception exc)
                                 {
-                                    File.Delete(tempPath);
+                                    Console.WriteLine(exc.Message);
+
+                                    if (exc.Message.Contains("because it is being used by another process") && !process.HasExited)
+                                    {
+                                        process.Kill();
+                                        Thread.Sleep(10000);
+
+                                        try
+                                        {
+                                            File.Move(tempPath, targetPath);
+                                        }
+                                        catch {}
+
+                                        continue;
+                                    }
+
+                                    try
+                                    {
+                                        File.Delete(tempPath);
+                                    }
+                                    catch {}
                                 }
                             }
                         }
